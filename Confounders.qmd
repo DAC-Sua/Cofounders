@@ -1,0 +1,202 @@
+---
+title: "Confounders"
+author: "Súa Jiménez Brenes"
+format: html
+editor: visual
+server: shiny
+---
+
+## Correlaciones
+
+Todos nos hemos topado c
+
+```{r}
+library(magrittr)
+```
+
+el sitio de [Tyler Vigen](https://www.tylervigen.com/spurious-correlations) sobre correlaciones espurias; son sencillas de ver y hasta caricaturescas.
+
+```{r}
+uiOutput(outputId = "spu_corr") 
+actionButton("corr", icon("fas fa-magic"), label="Spurious Correlations!", style = 'display: block; margin: auto')
+
+```
+
+```{r}
+#| context: server
+
+values <- reactiveValues(image_name = sample(list.files('www'), 1))
+  
+observeEvent(input$corr,
+                         {
+                           list <- list.files('www')
+                           list <- list[!grepl(values$image_name, list)]
+                          values$image_name <- sample(list, 1)
+                           
+})
+  
+
+  output$spu_corr <- renderUI({
+
+      img(src = paste0('www/',values$image_name), height = '300px')
+    
+ 
+})
+  
+   output$spu_corr2 <- renderUI({
+
+      img(src = paste0('www/',values$image_name), height = '300px')
+    
+}) 
+  
+```
+
+## Directed Acyclic Graphs (DAG's)
+
+Los DAG's son representaciones visuales de las relaciones causales entre las diferentes variables que medimos y estamos considerando incluir en nuestros modelos. La definición de cada una de las relaciones causales son generadas de nuestro entendimiento , por lo que es donde vamos a racionalizar y darle una estructura lógica a nuestro análisis. Los DAGs van más allá de solo ayudarnos a crear nuestros modelos, sino que son instrumentos que anclan nuestros modelos a la realidad. Cuando presentamos un modelo sin su DAG, estamos asumiendo que las personas no solo manejan la misma información que nosotres sino que comprenden las implicaciones sobre cada una de las variables.
+
+![Fig.1. DAG del efecto de A sobre C.](www/DAG.png){fig-align="center" width="328"}
+
+A partir de un DAG vamos a racionalizar el modelo estadístico que queremos desarrollar, por ejemplo, del DAG anterior podemos generar 3 modelos diferentes que pueden responder a diferentes preguntas:
+
+$$ 
+a)\;\;\;\; C \sim A + B 
+$$
+
+$$ 
+b)\;\;\;\;C \sim A
+$$
+
+$$ 
+c)\;\;\;\;C \sim B
+$$
+
+No solo estos modelos son diferentes entre si, sino que también significan cosas completamente diferentes si el DAG cambia. Por ejemplo el modelo (a), nos va a dar el efecto parcial de A sobre C, si asumimos que A tiene un efecto sobre C a través de B (Figura 1); sin embargo, si asumimos que A y B no están correlacionados, ese mismo modelo nos daría el efecto total de A sobre C.
+
+![Figura 2. Diferentes DAGS para un mismo sistema pueden llevar a interpretaciones distintas del mismo modelo.](www/DAGS.jpeg){fig-align="center" width="601"}
+
+### Cómo no dejarse engañar por un DAG 101
+
+Los DAGS pueden son engañosos si no estamos preparados para confrontarlos y analizarlos, a continuación las cosas que debemos tener en cuenta a la hora de analizar un DAG.
+
+#### La Pregunta
+
+Lo primero que necesitamos para no dejarnos engañar por un DAG es responder a la pregunta:
+
+::: {style="text-align: center;"}
+## **¿Qué relación estamos buscando?** {style="text-align: center;"}
+:::
+
+El DAG de la relaciones entre el dinero, barrio y salud de una persona (Figura 2) tiene la capacidad de responder diferentes preguntas:
+
+-   ¿Cuál es el efecto total del dinero sobre la salud?
+
+-   ¿Cuál es el efecto directo del dinero sobre la salud?
+
+-   ¿Cuál es el efecto total del barrio sobre la salud?
+
+-   ¿Cuál es el efecto parcial del dinero sobre la salud a través del dinero?
+
+![Figura 3. DAG sobre la relaciones entre el dinero, el barrio y la salud de una persona.](www/DAG2.png){fig-align="center" width="328"}
+
+Dependiendo de la pregunta, este DAG nos permitirá construir diferentes modelos y además diferentes interpretaciones de los estimadores.
+
+#### Los Jinetes del Apocalípsis
+
+A la hora de analizar nuestro DAG, debemos tener particular cuidado con 3 relaciones entre variables que pueden ser contraintuitivas.
+
+##### The Fork
+
+![Figura 4. The Fork](www/fork.png){fig-align="center"}
+
+Un *Fork* se presenta cuando una variable afecta a otras dos variables y puede generar una correlación espuría entre A y C. Esta correlación se crea porque A y C contienen información sobre la variación de B y es esa información genera una correlación entre A y C. Una manera de evitar esta correlación es haciendo una corrección por la variable B dentro de nuestro modelo. Al incluir B, el modelo va a tomar la porción de la variación de A y C que corresponde a B y la asigna a B, "liberando" A y C del *Fork.*
+
+A continuación, vamos a realizar simulaciones de la situación en la Figura 5 y ver qué sucede con los diferentes modelos cuando nuestra pregunta es ¿Cuál es el efecto de A sobre C?.
+
+![Figura 5. Relaciones entre las variables A, B y C. Se presenta un *Fork* en rojo centrado en B.](www/forkdag.jpeg){fig-align="center" width="328"}
+
+**Variables**
+
+Aquí definimos las variables de acuerdo al DAG anterior.
+
+```{r}
+B <- rnorm(1e4)
+A <- 0.6 * rnorm(1e4) + 0.4 * B
+C <- 0.2 * rnorm(1e4) + 0.5 * A + 0.3 * B
+```
+
+De acuerdo con la información que tenemos, el efecto de A sobre C debería ser de **0.5,** ya que todo el efecto de A sobre C se da manera directa.
+
+**Modelos**
+
+Debido a que queremos conocer la relación entre A y C y además no hay efecto de A sobre C a través de B (como sucede en la Figura 1), se podría considerar utilizar el siguiente modelo:
+
+$$ 
+C \sim A
+$$
+
+Los resultados del modelo son los siguientes:
+
+```{r}
+lm(C ~ A ) |> 
+  gtsummary::tbl_regression() |>
+  gtsummary::bold_labels()
+```
+
+Inmediatamente observamos un problema, el efecto de A sobre C según nuestro modelo es de 0.73 ± 0.1 y no 0.5. Este es el efecto del *Fork* sobre nuestro modelo. Además de la relación directa entre A y C, el modelo está tomando en cuenta la relación espuria que se produce entre A y C a través de B. Porqué? Porque el modelo no sabe **la dirección** de las relaciones entre las variables, entonces asume que la información que comparten A y C sobre B va en dirección $A \rightarrow B \rightarrow C$.
+
+Ahora vamos a elmininar el efecto del *Fork* al corregir por B.
+
+```{r}
+lm(C ~ A + B ) |> 
+  gtsummary::tbl_regression() |>
+  gtsummary::bold_labels()
+```
+
+Ahora vemos que el efecto de A es efectivamente **0.5**. Si visualizamos lo que está sucediendo desde el punto de vista del DAG es algo similar a "cerrar" el paso entre A y B.
+
+##### The pipe
+
+![Figura 6. The Pipe](www/pipe.png){fig-align="center"}
+
+Un *Pipe* se presenta cuando una variable afecta a otra variable a través de una tercera variable. Esto genera una correlación indirecta entre la primera y la última variable, en el ejemplo una relación entre A y C a través de B. Dependiendo de cuál sea la pregunta que tengamos, incluir alguna de estas variables puede ser muy problemático. Inicialmente vamos a estudiar una situación donde queremos conocer la relación entre la primera y la última variable.
+
+A continuación, vamos a realizar simulaciones de la situación en la Figura 7 y ver qué sucede con los diferentes modelos cuando nuestra pregunta es ¿Cuál es el efecto total de A sobre C?.
+
+![Figura 7. Relaciones entre las variables A, B y C. Se presenta un *Pipe* en rojo centrado en B.](www/pipe_dag.jpeg){fig-align="center"}
+
+**Variables**
+
+Aquí definimos las variables de acuerdo al DAG anterior.
+
+```{r}
+A <- rnorm(1e4)
+B <- 0.6 * rnorm(1e4) + 0.4 * A
+C <- 0.2 * rnorm(1e4) + 0.5 * A + 0.3 * B
+```
+
+De acuerdo con la información que tenemos, el efecto de A sobre C debería ser de **0.62,** ya que existe el efecto directo de A sobre C que es de **0.5** y el efecto indirecto de A sobre C a través de B que se calcula multiplicando el efecto de A sobre B **0.4** por el efecto de B sobre C **0.3**.
+
+**Modelos**
+
+Debido a que queremos conocer la relación entre A y C y además hay un efecto de A sobre C a través de B, se podría considerar utilizar el siguiente modelo:
+
+$$ 
+C \sim A + B
+$$
+
+Los resultados del modelo son los siguientes:
+
+```{r}
+lm(C ~ A + B ) |> 
+  gtsummary::tbl_regression() |>
+  gtsummary::bold_labels()
+```
+
+Nuevamente tenemos un problema con respecto al efecto de A ya que parece que solo estamos midiendo el efecto directo de A y no el efecto total. Esto se debe a que al incluir B, le estamos diciendo al modelo que "cierre" el paso entre A y B, por lo que solo quedarían efectos directos. En esta situación lo correcto es no incluir B en el análisis para tomar en cuenta tanto el efecto directo como el indirecto a través de B.
+
+```{r}
+lm(C ~ A ) |> 
+  gtsummary::tbl_regression() |>
+  gtsummary::bold_labels()
+```

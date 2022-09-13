@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.0.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Súa Jiménez Brenes">
+
+<title>Confounders</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+<script src="Confounders_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Confounders_files/libs/quarto-html/quarto.js"></script>
+<script src="Confounders_files/libs/quarto-html/popper.min.js"></script>
+<script src="Confounders_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Confounders_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Confounders_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Confounders_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Confounders_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Confounders_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Confounders_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Confounders</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Súa Jiménez Brenes </p>
+          </div>
+  </div>
+    
+    
+  </div>
+  
+
+</header>
+
+<section id="correlaciones" class="level2">
+<h2 class="anchored" data-anchor-id="correlaciones">Correlaciones</h2>
+<p>Todos nos hemos topado c</p>
+<div class="cell">
+
+</div>
+<p>el sitio de <a href="https://www.tylervigen.com/spurious-correlations">Tyler Vigen</a> sobre correlaciones espurias; son sencillas de ver y hasta caricaturescas.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p></p><div id="spu_corr" class="shiny-html-output"></div><p></p>
+</div>
+<div class="cell-output-display">
+<button id="corr" type="button" class="btn btn-default action-button" style="display: block; margin: auto">
+<i class="fa fa-fas fa-magic" role="presentation" aria-label="fas fa-magic icon"></i>
+Spurious Correlations!
+</button>
+</div>
+</div>
+<div class="cell" data-context="server">
+
+</div>
+</section>
+<section id="directed-acyclic-graphs-dags" class="level2">
+<h2 class="anchored" data-anchor-id="directed-acyclic-graphs-dags">Directed Acyclic Graphs (DAG’s)</h2>
+<p>Los DAG’s son representaciones visuales de las relaciones causales entre las diferentes variables que medimos y estamos considerando incluir en nuestros modelos. La definición de cada una de las relaciones causales son generadas de nuestro entendimiento , por lo que es donde vamos a racionalizar y darle una estructura lógica a nuestro análisis. Los DAGs van más allá de solo ayudarnos a crear nuestros modelos, sino que son instrumentos que anclan nuestros modelos a la realidad. Cuando presentamos un modelo sin su DAG, estamos asumiendo que las personas no solo manejan la misma información que nosotres sino que comprenden las implicaciones sobre cada una de las variables.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="www/DAG.png" class="img-fluid figure-img" width="328"></p>
+<p></p><figcaption class="figure-caption">Fig.1. DAG del efecto de A sobre C.</figcaption><p></p>
+</figure>
+</div>
+<p>A partir de un DAG vamos a racionalizar el modelo estadístico que queremos desarrollar, por ejemplo, del DAG anterior podemos generar 3 modelos diferentes que pueden responder a diferentes preguntas:</p>
+<p><span class="math display">\[
+a)\;\;\;\; C \sim A + B \\
+b)\;\;\;\;C \sim A \\
+c)\;\;\;\;C \sim B
+\]</span></p>
+<p>No solo estos modelos son diferentes entre si, sino que también significan cosas completamente diferentes si el DAG cambia. Por ejemplo el modelo (a), nos va a dar el efecto parcial de A sobre C, si asumimos que A tiene un efecto sobre C a través de B (Figura 1); sin embargo, si asumimos que A y B no están correlacionados, ese mismo modelo nos daría el efecto total de A sobre C.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="www/DAGS.jpeg" class="img-fluid figure-img" width="601"></p>
+<p></p><figcaption class="figure-caption">Figura 2. Diferentes DAGS para un mismo sistema pueden llevar a interpretaciones distintas del mismo modelo.</figcaption><p></p>
+</figure>
+</div>
+<section id="cómo-no-dejarse-engañar-por-un-dag-101" class="level3">
+<h3 class="anchored" data-anchor-id="cómo-no-dejarse-engañar-por-un-dag-101">Cómo no dejarse engañar por un DAG 101</h3>
+<p>Los DAGS pueden son engañosos si no estamos preparados para confrontarlos y analizarlos, a continuación las cosas que debemos tener en cuenta a la hora de analizar un DAG.</p>
+<section id="la-pregunta" class="level4">
+<h4 class="anchored" data-anchor-id="la-pregunta">La Pregunta</h4>
+<p>Lo primero que necesitamos para no dejarnos engañar por un DAG es responder a la pregunta:</p>
+</section>
+</section>
+</section>
+<section id="qué-relación-estamos-buscando" class="level2" style="text-align: center;">
+<h2 style="text-align: center;" class="anchored" data-anchor-id="qué-relación-estamos-buscando"><strong>¿Qué relación estamos buscando?</strong></h2>
+</section>
+<p>El DAG de la relaciones entre el dinero, barrio y salud de una persona (Figura 2) tiene la capacidad de responder diferentes preguntas:</p>
+<ul>
+<li><p>¿Cuál es el efecto total del dinero sobre la salud?</p></li>
+<li><p>¿Cuál es el efecto directo del dinero sobre la salud?</p></li>
+<li><p>¿Cuál es el efecto total del barrio sobre la salud?</p></li>
+<li><p>¿Cuál es el efecto parcial del dinero sobre la salud a través del dinero?</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="www/DAG2.png" class="img-fluid figure-img" width="328"></p>
+<p></p><figcaption class="figure-caption">Figura 3. DAG sobre la relaciones entre el dinero, el barrio y la salud de una persona.</figcaption><p></p>
+</figure>
+</div>
+<p>Dependiendo de la pregunta, este DAG nos permitirá construir diferentes modelos y además diferentes interpretaciones de los estimadores.</p>
+<section id="los-jinetes-del-apocalípsis" class="level4">
+<h4 class="anchored" data-anchor-id="los-jinetes-del-apocalípsis">Los Jinetes del Apocalípsis</h4>
+<p>A la hora de analizar nuestro DAG, debemos tener particular cuidado con 3 relaciones entre variables que pueden ser contraintuitivas.</p>
+<section id="the-fork" class="level5">
+<h5 class="anchored" data-anchor-id="the-fork">The Fork</h5>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="www/fork.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figura 4. The Fork</figcaption><p></p>
+</figure>
+</div>
+<p>Un <em>Fork</em> se presenta cuando una variable afecta a otras dos variables y puede generar una correlación espuría entre A y C. Esta correlación se crea porque A y C contienen información sobre la variación de B y es esa información genera una correlación entre A y C. Una manera de evitar esta correlación es haciendo una corrección por la variable B dentro de nuestro modelo. Al incluir B, el modelo va a tomar la porción de la variación de A y C que corresponde a B y la asigna a B, “liberando” A y C del <em>Fork.</em></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="www/forkdag.jpeg" class="img-fluid figure-img" width="328"></p>
+<p></p><figcaption class="figure-caption">Figura 5. Relaciones entre las variables A, B y C. Se presenta un Fork en rojo centrado en B.</figcaption><p></p>
+</figure>
+</div>
+<p>A continuación, vamos a realizar simulaciones de la situación en la figura 5 y ver qué sucede con los diferentes modelos cuando nuestra pregunta es ¿Cuál es el efecto de A sobre C?.</p>
+<p><strong>Variables</strong></p>
+<p>Aquí definimos las variables de acuerdo al DAG anterior.</p>
+<div class="cell">
+
+</div>
+<p>De acuerdo con la información que tenemos, el efecto de A sobre C debería ser de <strong>0.5, ya que todo el efecto de A sobre C se da manera directa</strong>.</p>
+<p><strong>Modelos</strong></p>
+<p>Debido a que queremos conocer la relación entre A y C y además no hay efecto de A sobre C a través de B (como sucede en la Figura 1), se podría considerar utilizar el siguiente modelo:</p>
+<p><span class="math display">\[
+C \sim A
+\]</span></p>
+<p>Los resultados del modelo son los siguientes:</p>
+<div class="cell">
+<div class="cell-output-display">
+
+<div id="jtzuurzyvq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#jtzuurzyvq .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#jtzuurzyvq .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#jtzuurzyvq .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#jtzuurzyvq .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#jtzuurzyvq .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#jtzuurzyvq .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#jtzuurzyvq .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#jtzuurzyvq .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#jtzuurzyvq .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#jtzuurzyvq .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#jtzuurzyvq .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#jtzuurzyvq .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#jtzuurzyvq .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jtzuurzyvq .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#jtzuurzyvq .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#jtzuurzyvq .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jtzuurzyvq .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#jtzuurzyvq .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jtzuurzyvq .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#jtzuurzyvq .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jtzuurzyvq .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#jtzuurzyvq .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jtzuurzyvq .gt_left {
+  text-align: left;
+}
+
+#jtzuurzyvq .gt_center {
+  text-align: center;
+}
+
+#jtzuurzyvq .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#jtzuurzyvq .gt_font_normal {
+  font-weight: normal;
+}
+
+#jtzuurzyvq .gt_font_bold {
+  font-weight: bold;
+}
+
+#jtzuurzyvq .gt_font_italic {
+  font-style: italic;
+}
+
+#jtzuurzyvq .gt_super {
+  font-size: 65%;
+}
+
+#jtzuurzyvq .gt_two_val_uncert {
+  display: inline-block;
+  line-height: 1em;
+  text-align: right;
+  font-size: 60%;
+  vertical-align: -0.25em;
+  margin-left: 0.1em;
+}
+
+#jtzuurzyvq .gt_footnote_marks {
+  font-style: italic;
+  font-weight: normal;
+  font-size: 75%;
+  vertical-align: 0.4em;
+}
+
+#jtzuurzyvq .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#jtzuurzyvq .gt_slash_mark {
+  font-size: 0.7em;
+  line-height: 0.7em;
+  vertical-align: 0.15em;
+}
+
+#jtzuurzyvq .gt_fraction_numerator {
+  font-size: 0.6em;
+  line-height: 0.6em;
+  vertical-align: 0.45em;
+}
+
+#jtzuurzyvq .gt_fraction_denominator {
+  font-size: 0.6em;
+  line-height: 0.6em;
+  vertical-align: -0.05em;
+}
+</style>
+<table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>Beta</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td class="gt_row gt_left" style="font-weight: bold;">A</td>
+<td class="gt_row gt_center">0.74</td>
+<td class="gt_row gt_center">0.73, 0.75</td>
+<td class="gt_row gt_center">&lt;0.001</td></tr>
+  </tbody>
+  
+  <tfoot class="gt_footnotes">
+    <tr>
+      <td class="gt_footnote" colspan="4"><sup class="gt_footnote_marks">1</sup> CI = Confidence Interval</td>
+    </tr>
+  </tfoot>
+</table>
+</div>
+</div>
+</div>
+<p>Inmediatamente observamos un problema, el efecto de A sobre C según nuestro modelo es de 0.73 ± 0.1 y no 0.5. Este es el efecto del <em>Fork</em> sobre nuestro modelo. Además de la relación directa entre A y C, el modelo está tomando en cuenta la relación espuria que se produce entre A y C a través de B. Porqué? Porque el modelo no sabe <strong>la dirección</strong> de las relaciones entre las variables, entonces asume que la información que comparten A y C sobre B va en dirección $ A \rightarrow B \rightarrow C $</p>
+<p>
+<script type="application/shiny-prerendered" data-context="server">
+values <- reactiveValues(image_name = sample(list.files('www'), 1))
+  
+observeEvent(input$corr,
+                         {
+                           list <- list.files('www')
+                           list <- list[!grepl(values$image_name, list)]
+                          values$image_name <- sample(list, 1)
+                           
+})
+  
+
+  output$spu_corr <- renderUI({
+
+      img(src = paste0('www/',values$image_name), height = '300px')
+    
+ 
+})
+  
+   output$spu_corr2 <- renderUI({
+
+      img(src = paste0('www/',values$image_name), height = '300px')
+    
+}) 
+  
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server-extras">
+ojs_define <- function(..., .session = shiny::getDefaultReactiveDomain()) {
+  quos <- rlang::enquos(...)
+  vars <- rlang::list2(...)
+  nm <- names(vars)
+  if (is.null(nm)) {
+    nm <- rep_len("", length(vars))
+  }
+  mapply(function(q, nm, val) {
+    # Infer name, if possible
+    if (nm == "") {
+      tryCatch({
+        nm <- rlang::as_name(q)
+      }, error = function(e) {
+        code <- paste(collapse = "\n", deparse(rlang::f_rhs(q)))
+        stop("ojs_define() could not create a name for the argument: ", code)
+      })
+    }
+    .session$output[[nm]] <- val
+    outputOptions(.session$output, nm, suspendWhenHidden = FALSE)
+    .session$sendCustomMessage("ojs-export", list(name = nm))
+    NULL
+  }, quos, nm, vars, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+  invisible()
+}
+</script>
+</p>
+<!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="dependencies">
+{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["font-awesome"]},{"type":"character","attributes":{},"value":["5.15.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["fontawesome"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/all.min.css","css/v4-shims.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["fontawesome"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.2.2"]}]}]}
+</script>
+<!--/html_preserve-->
+<!--html_preserve-->
+
+<script type="application/shiny-prerendered" data-context="execution_dependencies">
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69]}},"value":[{"type":"character","attributes":{},"value":["assertthat","backports","base","broom","broom.helpers","checkmate","cli","colorspace","commonmark","compiler","crayon","datasets","DBI","digest","dplyr","ellipsis","evaluate","fansi","fastmap","fontawesome","forcats","generics","ggplot2","glue","graphics","grDevices","grid","gt","gtable","gtsummary","haven","hms","htmltools","htmlwidgets","httpuv","jsonlite","knitr","labelled","later","lifecycle","magrittr","methods","mime","munsell","pillar","pkgconfig","promises","purrr","R6","Rcpp","rlang","rmarkdown","rstudioapi","sass","scales","shiny","stats","stringi","stringr","tibble","tidyr","tidyselect","tools","utf8","utils","vctrs","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["0.2.1","1.4.1","4.1.3","0.8.0","1.7.0","2.1.0","3.3.0","2.0-3","1.8.0","4.1.3","1.5.1","4.1.3","1.1.2","0.6.29","1.0.9","0.3.2","0.15","1.0.3","1.1.0","0.2.2","0.5.1","0.1.2","3.3.6","1.6.2","4.1.3","4.1.3","4.1.3","0.6.0","0.3.0","1.6.1","2.5.0","1.1.1","0.5.2","1.5.4","1.6.5","1.8.0","1.39","2.9.1","1.3.0","1.0.1","2.0.3","4.1.3","0.12","0.5.0","1.7.0","2.0.3","1.2.0.1","0.3.4","2.5.1","1.0.8.3","1.0.2","2.14","0.13","0.4.1","1.2.0","1.7.1","4.1.3","1.7.6","1.4.0","3.1.7","1.2.0","1.1.2","4.1.3","1.2.2","4.1.3","0.4.1","0.31","1.8-4","2.3.5"]}]}]}
+</script>
+<!--/html_preserve-->
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
